@@ -1,0 +1,56 @@
+- name: Web app deployement
+  hosts: servers
+  become: true
+  any_errors_fatal: true
+  vars_files:
+    - "./vars/vars_app.yml"
+    - "./vars/vars_secrets.yml"
+  tasks:
+    - name: afficher home debian
+      ansible.builtin.command: ls /var/www/html
+      register : _sortie_ls
+    - name: debug
+      ansible.builtin.debug:
+        var: _sortie_ls
+    - name: set nameservers
+      become: true
+      ansible.builtin.lineinfile:
+        path: "/etc/resolv.conf"
+        line: "nameserver 8.8.8.8"
+    - name: install apache2
+      become: true
+      changed_when: false
+      apt:
+        name: "{{item}}"
+        update_cache: true
+        state: latest
+      loop: "{{app_packages}}"
+    - name: demarrer apache et firewalld
+      ansible.builtin.command:  "{{item}}"
+      loop: "{{app_services}}"
+    -  name: port 80
+       become: true
+       ansible.posix.firewalld:
+         zone: public
+         port: "80/tcp"
+         permanent: true
+         state: enabled
+       register: fw
+    - name: Copy file with owner and permissions
+      become: true
+      ansible.builtin.template:
+        src: "./templates/index.html.j2"
+        dest: "{{app_directory}}"
+        mode: '0644'
+    - name: reload firewalld if needed
+      become: true
+      service:
+        name: firewalld
+        state: restarted
+      when: fw.changed
+    - name: Creating user  with admin access
+      become: true
+      user:
+        name: rayan
+        password: "{{ user_password | password_hash('sha512') }}"
+        groups: sudo

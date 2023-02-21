@@ -1,0 +1,21 @@
+app_dir: "/app"
+app_name: "beys_movies"
+app_files:
+  - "configuration.json"
+  - "app.conf"
+app_another_list:
+  - name: "Firstname"
+    lastname: "LastName"
+app_packages:
+  - "apache2"
+  - "firewalld"
+app_services:
+  - "sudo systemctl start apache2"
+  - "sudo systemctl start firewalld"
+app_directory: "/var/www/html/index.html"
+app_movies:
+  - title: "pulp fiction"
+    director: "quentin tarantino"
+  - title: "interstellar"
+    director: "christopher nolan"
+
